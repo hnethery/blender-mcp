@@ -2126,37 +2126,58 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
 
-        layout.prop(scene, "blendermcp_port")
-        layout.prop(scene, "blendermcp_use_polyhaven", text="Use assets from Poly Haven")
+        # Server Settings
+        box = layout.box()
+        box.label(text="Server Settings", icon="PREFERENCES")
+        row = box.row()
+        row.prop(scene, "blendermcp_port")
 
-        layout.prop(scene, "blendermcp_use_hyper3d", text="Use Hyper3D Rodin 3D model generation")
-        if scene.blendermcp_use_hyper3d:
-            layout.prop(scene, "blendermcp_hyper3d_mode", text="Rodin Mode")
-            layout.prop(scene, "blendermcp_hyper3d_api_key", text="API Key")
-            layout.operator("blendermcp.set_hyper3d_free_trial_api_key", text="Set Free Trial API Key")
-
-        layout.prop(scene, "blendermcp_use_sketchfab", text="Use assets from Sketchfab")
-        if scene.blendermcp_use_sketchfab:
-            layout.prop(scene, "blendermcp_sketchfab_api_key", text="API Key")
-
-        layout.prop(scene, "blendermcp_use_hunyuan3d", text="Use Tencent Hunyuan 3D model generation")
-        if scene.blendermcp_use_hunyuan3d:
-            layout.prop(scene, "blendermcp_hunyuan3d_mode", text="Hunyuan3D Mode")
-            if scene.blendermcp_hunyuan3d_mode == 'OFFICIAL_API':
-                layout.prop(scene, "blendermcp_hunyuan3d_secret_id", text="SecretId")
-                layout.prop(scene, "blendermcp_hunyuan3d_secret_key", text="SecretKey")
-            if scene.blendermcp_hunyuan3d_mode == 'LOCAL_API':
-                layout.prop(scene, "blendermcp_hunyuan3d_api_url", text="API URL")
-                layout.prop(scene, "blendermcp_hunyuan3d_octree_resolution", text="Octree Resolution")
-                layout.prop(scene, "blendermcp_hunyuan3d_num_inference_steps", text="Number of Inference Steps")
-                layout.prop(scene, "blendermcp_hunyuan3d_guidance_scale", text="Guidance Scale")
-                layout.prop(scene, "blendermcp_hunyuan3d_texture", text="Generate Texture")
-        
         if not scene.blendermcp_server_running:
-            layout.operator("blendermcp.start_server", text="Connect to MCP server")
+            box.operator("blendermcp.start_server", text="Connect to Claude", icon="PLAY")
         else:
-            layout.operator("blendermcp.stop_server", text="Disconnect from MCP server")
-            layout.label(text=f"Running on port {scene.blendermcp_port}")
+            box.operator("blendermcp.stop_server", text="Disconnect", icon="PAUSE")
+            row = box.row()
+            row.alignment = 'CENTER'
+            row.label(text=f"Running on port {scene.blendermcp_port}", icon="CHECKBOX_HLT")
+
+        layout.separator()
+        layout.label(text="Integrations:")
+
+        # Poly Haven
+        box = layout.box()
+        box.prop(scene, "blendermcp_use_polyhaven", text="Poly Haven Assets", icon="IMAGE_DATA")
+
+        # Hyper3D
+        box = layout.box()
+        box.prop(scene, "blendermcp_use_hyper3d", text="Hyper3D Rodin", icon="MESH_DATA")
+        if scene.blendermcp_use_hyper3d:
+            col = box.column(align=True)
+            col.prop(scene, "blendermcp_hyper3d_mode", text="Rodin Mode")
+            col.prop(scene, "blendermcp_hyper3d_api_key", text="API Key")
+            col.operator("blendermcp.set_hyper3d_free_trial_api_key", text="Set Free Trial API Key", icon="KEY_COMMON")
+
+        # Sketchfab
+        box = layout.box()
+        box.prop(scene, "blendermcp_use_sketchfab", text="Sketchfab Assets", icon="URL")
+        if scene.blendermcp_use_sketchfab:
+            col = box.column(align=True)
+            col.prop(scene, "blendermcp_sketchfab_api_key", text="API Key")
+
+        # Hunyuan3D
+        box = layout.box()
+        box.prop(scene, "blendermcp_use_hunyuan3d", text="Tencent Hunyuan 3D", icon="WORLD")
+        if scene.blendermcp_use_hunyuan3d:
+            col = box.column(align=True)
+            col.prop(scene, "blendermcp_hunyuan3d_mode", text="Mode")
+            if scene.blendermcp_hunyuan3d_mode == 'OFFICIAL_API':
+                col.prop(scene, "blendermcp_hunyuan3d_secret_id", text="SecretId")
+                col.prop(scene, "blendermcp_hunyuan3d_secret_key", text="SecretKey")
+            if scene.blendermcp_hunyuan3d_mode == 'LOCAL_API':
+                col.prop(scene, "blendermcp_hunyuan3d_api_url", text="API URL")
+                col.prop(scene, "blendermcp_hunyuan3d_octree_resolution", text="Octree Resolution")
+                col.prop(scene, "blendermcp_hunyuan3d_num_inference_steps", text="Inference Steps")
+                col.prop(scene, "blendermcp_hunyuan3d_guidance_scale", text="Guidance Scale")
+                col.prop(scene, "blendermcp_hunyuan3d_texture", text="Generate Texture")
 
 # Operator to set Hyper3D API Key
 class BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey(bpy.types.Operator):
