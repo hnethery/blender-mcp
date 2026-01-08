@@ -2154,6 +2154,13 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
             col = box.column(align=True)
             col.prop(scene, "blendermcp_hyper3d_mode", text="Rodin Mode")
             col.prop(scene, "blendermcp_hyper3d_api_key", text="API Key")
+
+            # Helper link for API key
+            if scene.blendermcp_hyper3d_mode == 'MAIN_SITE':
+                 col.operator("wm.url_open", text="Get API Key (Hyper3D)", icon="URL").url = "https://hyper3d.ai/"
+            else:
+                 col.operator("wm.url_open", text="Get API Key (Fal.ai)", icon="URL").url = "https://fal.ai/dashboard/keys"
+
             col.operator("blendermcp.set_hyper3d_free_trial_api_key", text="Set Free Trial API Key", icon="KEY_COMMON")
 
         # Sketchfab
@@ -2162,6 +2169,7 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
         if scene.blendermcp_use_sketchfab:
             col = box.column(align=True)
             col.prop(scene, "blendermcp_sketchfab_api_key", text="API Key")
+            col.operator("wm.url_open", text="Get API Key", icon="HELP").url = "https://sketchfab.com/settings/password"
 
         # Hunyuan3D
         box = layout.box()
@@ -2172,12 +2180,21 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
             if scene.blendermcp_hunyuan3d_mode == 'OFFICIAL_API':
                 col.prop(scene, "blendermcp_hunyuan3d_secret_id", text="SecretId")
                 col.prop(scene, "blendermcp_hunyuan3d_secret_key", text="SecretKey")
+                col.operator("wm.url_open", text="Get API Credentials", icon="HELP").url = "https://console.cloud.tencent.com/hunyuan"
             if scene.blendermcp_hunyuan3d_mode == 'LOCAL_API':
                 col.prop(scene, "blendermcp_hunyuan3d_api_url", text="API URL")
                 col.prop(scene, "blendermcp_hunyuan3d_octree_resolution", text="Octree Resolution")
                 col.prop(scene, "blendermcp_hunyuan3d_num_inference_steps", text="Inference Steps")
                 col.prop(scene, "blendermcp_hunyuan3d_guidance_scale", text="Guidance Scale")
                 col.prop(scene, "blendermcp_hunyuan3d_texture", text="Generate Texture")
+
+        # Help Section
+        layout.separator()
+        box = layout.box()
+        box.label(text="Community & Support", icon="HELP")
+        row = box.row()
+        row.operator("wm.url_open", text="Tutorial", icon="FILE_MOVIE").url = "https://www.youtube.com/watch?v=lCyQ717DuzQ"
+        row.operator("wm.url_open", text="Discord", icon="COMMUNITY").url = "https://discord.gg/z5apgR8TFU"
 
 # Operator to set Hyper3D API Key
 class BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey(bpy.types.Operator):
