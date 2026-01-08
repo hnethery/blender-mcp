@@ -139,6 +139,13 @@ class BlenderMCPServer:
                         break
 
                     buffer += data
+                    # Optimization: Only attempt to parse if the buffer seems to contain a closed object
+                    # We expect a JSON object {...}, so it should end with '}'.
+                    # We strip trailing whitespace from the byte buffer to check.
+                    # This avoids the expensive decode + JSON parse on partial packets (O(N^2) -> O(N))
+                    if not buffer.strip().endswith(b'}'):
+                        continue
+
                     try:
                         # Try to parse command
                         command = json.loads(buffer.decode('utf-8'))
@@ -306,18 +313,28 @@ class BlenderMCPServer:
         if obj.type != 'MESH':
             raise TypeError("Object must be a mesh")
 
-        # Get the bounding box corners in local space
-        local_bbox_corners = [mathutils.Vector(corner) for corner in obj.bound_box]
+        mw = obj.matrix_world
+        # Transform first corner to initialize min/max
+        # obj.bound_box contains 8 tuples (float, float, float)
+        v = mw @ mathutils.Vector(obj.bound_box[0])
+        min_x, min_y, min_z = v.x, v.y, v.z
+        max_x, max_y, max_z = v.x, v.y, v.z
 
-        # Convert to world coordinates
-        world_bbox_corners = [obj.matrix_world @ corner for corner in local_bbox_corners]
+        # Transform remaining corners and update min/max
+        for corner in obj.bound_box[1:]:
+            v = mw @ mathutils.Vector(corner)
+            if v.x < min_x: min_x = v.x
+            elif v.x > max_x: max_x = v.x
 
-        # Compute axis-aligned min/max coordinates
-        min_corner = mathutils.Vector(map(min, zip(*world_bbox_corners)))
-        max_corner = mathutils.Vector(map(max, zip(*world_bbox_corners)))
+            if v.y < min_y: min_y = v.y
+            elif v.y > max_y: max_y = v.y
+
+            if v.z < min_z: min_z = v.z
+            elif v.z > max_z: max_z = v.z
 
         return [
-            [*min_corner], [*max_corner]
+            [min_x, min_y, min_z],
+            [max_x, max_y, max_z]
         ]
 
 
