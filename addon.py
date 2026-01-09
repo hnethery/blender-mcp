@@ -140,6 +140,11 @@ class BlenderMCPServer:
 
                     buffer += data
                     try:
+                        # Optimization: Check if buffer ends with '}' before trying to parse
+                        # This avoids expensive decode/parse operations on incomplete data
+                        if not buffer.strip().endswith(b'}'):
+                            raise json.JSONDecodeError("Incomplete data", "", 0)
+
                         # Try to parse command
                         command = json.loads(buffer.decode('utf-8'))
                         buffer = b''
