@@ -2154,6 +2154,15 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
             col = box.column(align=True)
             col.prop(scene, "blendermcp_hyper3d_mode", text="Rodin Mode")
             col.prop(scene, "blendermcp_hyper3d_api_key", text="API Key")
+
+            # Helper to get API key
+            row = col.row()
+            op = row.operator("wm.url_open", text="Get API Key", icon="HELP")
+            if scene.blendermcp_hyper3d_mode == 'FAL_AI':
+                op.url = "https://fal.ai/dashboard/keys"
+            else:
+                op.url = "https://hyperhuman.deemos.com/rodin"
+
             col.operator("blendermcp.set_hyper3d_free_trial_api_key", text="Set Free Trial API Key", icon="KEY_COMMON")
 
         # Sketchfab
@@ -2162,6 +2171,11 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
         if scene.blendermcp_use_sketchfab:
             col = box.column(align=True)
             col.prop(scene, "blendermcp_sketchfab_api_key", text="API Key")
+
+            # Helper to get API key
+            row = col.row()
+            op = row.operator("wm.url_open", text="Get API Key", icon="HELP")
+            op.url = "https://sketchfab.com/settings/password"
 
         # Hunyuan3D
         box = layout.box()
