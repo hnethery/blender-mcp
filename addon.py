@@ -2130,6 +2130,7 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
         box = layout.box()
         box.label(text="Server Settings", icon="PREFERENCES")
         row = box.row()
+        row.enabled = not scene.blendermcp_server_running
         row.prop(scene, "blendermcp_port")
 
         if not scene.blendermcp_server_running:
@@ -2153,7 +2154,15 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
         if scene.blendermcp_use_hyper3d:
             col = box.column(align=True)
             col.prop(scene, "blendermcp_hyper3d_mode", text="Rodin Mode")
-            col.prop(scene, "blendermcp_hyper3d_api_key", text="API Key")
+
+            row = col.row(align=True)
+            row.prop(scene, "blendermcp_hyper3d_api_key", text="API Key")
+            op = row.operator("wm.url_open", text="", icon="URL")
+            if scene.blendermcp_hyper3d_mode == 'MAIN_SITE':
+                op.url = "https://hyperhuman.deemos.com/rodin"
+            else:
+                op.url = "https://fal.ai/dashboard/keys"
+
             col.operator("blendermcp.set_hyper3d_free_trial_api_key", text="Set Free Trial API Key", icon="KEY_COMMON")
 
         # Sketchfab
@@ -2161,7 +2170,10 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
         box.prop(scene, "blendermcp_use_sketchfab", text="Sketchfab Assets", icon="URL")
         if scene.blendermcp_use_sketchfab:
             col = box.column(align=True)
-            col.prop(scene, "blendermcp_sketchfab_api_key", text="API Key")
+            row = col.row(align=True)
+            row.prop(scene, "blendermcp_sketchfab_api_key", text="API Key")
+            op = row.operator("wm.url_open", text="", icon="URL")
+            op.url = "https://sketchfab.com/settings/password"
 
         # Hunyuan3D
         box = layout.box()
