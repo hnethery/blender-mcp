@@ -264,7 +264,29 @@ class BlenderMCPServer:
         else:
             return {"status": "error", "message": f"Unknown command type: {cmd_type}"}
 
+    def _download_file(self, url, destination, headers=None, timeout=None):
+        """Helper to stream download a file to save memory"""
+        try:
+            response = requests.get(url, headers=headers, stream=True, timeout=timeout)
+            if response.status_code != 200:
+                return response
 
+            if isinstance(destination, str):
+                with open(destination, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            else:
+                # Assume file-like object
+                for chunk in response.iter_content(chunk_size=8192):
+                    destination.write(chunk)
+
+            return response
+        except Exception as e:
+            # Create a mock response object to carry the error
+            class ErrorResponse:
+                status_code = 0
+                reason = str(e)
+            return ErrorResponse()
 
     def get_scene_info(self):
         """Get information about the current Blender scene"""
@@ -503,11 +525,11 @@ class BlenderMCPServer:
                     # since Blender can't properly load HDR data directly from memory
                     with tempfile.NamedTemporaryFile(suffix=f".{file_format}", delete=False) as tmp_file:
                         # Download the file
-                        response = requests.get(file_url, headers=REQ_HEADERS)
+                        response = self._download_file(file_url, tmp_file, headers=REQ_HEADERS)
                         if response.status_code != 200:
-                            return {"error": f"Failed to download HDRI: {response.status_code}"}
+                            reason = getattr(response, 'reason', '')
+                            return {"error": f"Failed to download HDRI: {response.status_code} {reason}"}
 
-                        tmp_file.write(response.content)
                         tmp_path = tmp_file.name
 
                     try:
@@ -599,9 +621,8 @@ class BlenderMCPServer:
                                 # Use NamedTemporaryFile like we do for HDRIs
                                 with tempfile.NamedTemporaryFile(suffix=f".{file_format}", delete=False) as tmp_file:
                                     # Download the file
-                                    response = requests.get(file_url, headers=REQ_HEADERS)
+                                    response = self._download_file(file_url, tmp_file, headers=REQ_HEADERS)
                                     if response.status_code == 200:
-                                        tmp_file.write(response.content)
                                         tmp_path = tmp_file.name
 
                                         # Load image from temporary file
@@ -736,12 +757,10 @@ class BlenderMCPServer:
                         main_file_name = file_url.split("/")[-1]
                         main_file_path = os.path.join(temp_dir, main_file_name)
 
-                        response = requests.get(file_url, headers=REQ_HEADERS)
+                        response = self._download_file(file_url, main_file_path, headers=REQ_HEADERS)
                         if response.status_code != 200:
-                            return {"error": f"Failed to download model: {response.status_code}"}
-
-                        with open(main_file_path, "wb") as f:
-                            f.write(response.content)
+                            reason = getattr(response, 'reason', '')
+                            return {"error": f"Failed to download model: {response.status_code} {reason}"}
 
                         # Check for included files and download them
                         if "include" in file_info and file_info["include"]:
@@ -754,11 +773,8 @@ class BlenderMCPServer:
                                 os.makedirs(os.path.dirname(include_file_path), exist_ok=True)
 
                                 # Download the included file
-                                include_response = requests.get(include_url, headers=REQ_HEADERS)
-                                if include_response.status_code == 200:
-                                    with open(include_file_path, "wb") as f:
-                                        f.write(include_response.content)
-                                else:
+                                include_response = self._download_file(include_url, include_file_path, headers=REQ_HEADERS)
+                                if include_response.status_code != 200:
                                     print(f"Failed to download included file: {include_path}")
 
                         # Import the model into Blender
@@ -1624,18 +1640,15 @@ class BlenderMCPServer:
             if not download_url:
                 return {"error": "No download URL available for this model. Make sure the model is downloadable and you have access."}
 
-            # Download the model (already has timeout)
-            model_response = requests.get(download_url, timeout=60)  # 60 second timeout
-
-            if model_response.status_code != 200:
-                return {"error": f"Model download failed with status code {model_response.status_code}"}
-
             # Save to temporary file
             temp_dir = tempfile.mkdtemp()
             zip_file_path = os.path.join(temp_dir, f"{uid}.zip")
 
-            with open(zip_file_path, "wb") as f:
-                f.write(model_response.content)
+            # Download the model (already has timeout)
+            model_response = self._download_file(download_url, zip_file_path, timeout=60)  # 60 second timeout
+
+            if model_response.status_code != 200:
+                return {"error": f"Model download failed with status code {model_response.status_code}"}
 
             # Extract the zip file with enhanced security
             with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
