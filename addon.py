@@ -139,6 +139,11 @@ class BlenderMCPServer:
                         break
 
                     buffer += data
+                    # Optimization: Check if buffer end looks like a JSON object closure
+                    # This avoids expensive decode/parse operations on obviously incomplete data
+                    if not buffer.rstrip().endswith((b'}', b']')):
+                        continue
+
                     try:
                         # Try to parse command
                         command = json.loads(buffer.decode('utf-8'))
