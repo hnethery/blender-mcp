@@ -1,5 +1,7 @@
-# Palette's Journal
+## 2025-02-27 - Blender Addon UI Inputs
+**Learning:** Blender UI inputs should be disabled using `row.enabled = condition` when the underlying process (e.g., server) is active to prevent invalid state changes.
+**Action:** Use `row.enabled` or `layout.enabled` for settings that require a restart.
 
-## 2025-05-18 - [Blender Panel Organization]
-**Learning:** Grouping Blender addon properties in UI boxes using `layout.box()` drastically improves readability compared to a flat list. Adding icons to operators clarifies their function.
-**Action:** Always use `layout.box()` for distinct feature sets in Blender panels and look for appropriate built-in icons.
+## 2025-02-27 - External Links in Blender
+**Learning:** External links in the Blender addon UI are implemented using the `wm.url_open` operator.
+**Action:** Use `row.operator("wm.url_open", text="", icon="URL").url = "..."` for help links.
